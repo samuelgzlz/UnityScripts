@@ -1,0 +1,41 @@
+##This script works by doing the following: create a new script in Unity, name it MaterialReassigner, copy and paste the code, wait for compile, under Tools>MaterialReassigner. Then, you can choose any material and with the prefab selected press Apply Material.
+
+using UnityEngine;
+using UnityEditor;
+
+public class MaterialReassigner : EditorWindow
+{
+    [SerializeField] private Material newMaterial;
+    private GameObject[] selectedGameObjects;
+
+    [MenuItem("Tools/Material Reassigner")]
+    public static void ShowWindow()
+    {
+        GetWindow<MaterialReassigner>("Material Reassigner");
+    }
+
+    private void OnGUI()
+    {
+        GUILayout.Label("Reassign Material for Selected Prefabs", EditorStyles.boldLabel);
+
+        newMaterial = (Material)EditorGUILayout.ObjectField("New Material", newMaterial, typeof(Material), false);
+
+        if (GUILayout.Button("Apply Material"))
+        {
+            AssignMaterialToSelected();
+        }
+    }
+
+    private void AssignMaterialToSelected()
+    {
+        selectedGameObjects = Selection.gameObjects;
+        foreach (GameObject go in selectedGameObjects)
+        {
+            Renderer[] renderers = go.GetComponentsInChildren<Renderer>(true);
+            foreach (Renderer rend in renderers)
+            {
+                rend.sharedMaterial = newMaterial;
+            }
+        }
+    }
+}
