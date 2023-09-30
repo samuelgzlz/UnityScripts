@@ -6,4 +6,4 @@ Will update each time a new script is added.
 
 ##Scripts
 
-1. Material Reassigner: Pick a prefab on the scene and apply the selected material with one click.
+1. Material Reassigner: Pick a prefab on the editor or scene and apply the selected material with one click.
