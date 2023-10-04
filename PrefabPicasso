@@ -1,0 +1,308 @@
+using UnityEngine;
+using UnityEditor;
+using System.Collections.Generic;
+
+public class PrefabPicassoWindow : EditorWindow
+{
+    public List<GameObject> prefabs = new List<GameObject>();
+    public bool placeObjects;
+    public Vector3 minScaling = Vector3.one;
+    public Vector3 maxScaling = Vector3.one * 3;
+    public Vector3 rotation = Vector3.zero;
+    public Vector3 rotationRandomness = Vector3.zero;
+    public float brushSize = 1f;
+    public int objectCount = 10;
+    public bool alignToSurface;
+    public float yOffset = 0f;
+    private Vector2 scrollPosition;
+    private Vector2 prefabScrollPosition;
+    private bool showScalingSettings = true;
+    private bool showRotationSettings = true;
+    private bool showBrushSettings = true;
+    private Rect instructionRect;
+
+    [MenuItem("Window/Prefab Picasso")]
+    public static void ShowWindow()
+    {
+        GetWindow<PrefabPicassoWindow>("Prefab Picasso");
+    }
+
+    private void OnEnable()
+    {
+        SceneView.duringSceneGui += DuringSceneGUI;
+    }
+
+    private void OnDisable()
+    {
+        SceneView.duringSceneGui -= DuringSceneGUI;
+        Tools.hidden = false;
+    }
+
+    private void OnGUI()
+    {
+        Color originalColor = GUI.backgroundColor;
+
+        GUIStyle titleStyle = new GUIStyle(GUI.skin.label)
+        {
+            fontSize = 28,
+            fontStyle = FontStyle.Bold,
+            alignment = TextAnchor.UpperCenter
+        };
+        titleStyle.normal.textColor = Color.white;
+
+        GUIStyle sectionTitleStyle = new GUIStyle(GUI.skin.label)
+        {
+            fontSize = 16,
+            fontStyle = FontStyle.Bold
+        };
+
+        GUIStyle copyrightStyle = new GUIStyle(GUI.skin.label)
+        {
+            fontSize = 16,
+            fontStyle = FontStyle.Bold,
+            alignment = TextAnchor.UpperCenter
+        };
+
+        GUILayout.Space(30);
+        EditorGUILayout.LabelField("PREFAB PICASSO", titleStyle, GUILayout.Height(40));
+        GUIStyle centerLabelStyle = new GUIStyle(GUI.skin.label)
+        {
+            alignment = TextAnchor.UpperCenter,
+            wordWrap = true
+        };
+        GUILayout.Label("Thanks for your support. Read instructions below before using.", centerLabelStyle);
+        GUILayout.Space(10);
+
+        scrollPosition = GUILayout.BeginScrollView(scrollPosition, false, false);
+
+        GUI.backgroundColor = new Color(0.7f, 0.7f, 0.7f);
+        GUILayout.BeginVertical("Box");
+
+        GUILayout.Label("Turn Tool ON/OFF", sectionTitleStyle);
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button(placeObjects ? "Toggle OFF" : "Toggle ON", GUILayout.Width(100), GUILayout.Height(25)))
+        {
+            placeObjects = !placeObjects;
+            Tools.hidden = placeObjects;
+        }
+        GUIStyle boxStyle = new GUIStyle(GUI.skin.box)
+        {
+            alignment = TextAnchor.MiddleCenter,
+            fontSize = 20
+        };
+        boxStyle.normal.textColor = placeObjects ? Color.black : Color.white;
+        GUI.backgroundColor = placeObjects ? new Color(0f, 1f, 0.043f) : new Color(0.2f, 0.2f, 0.2f);
+        GUILayout.Box(placeObjects ? "ON" : "OFF", boxStyle, GUILayout.Width(50), GUILayout.Height(25));
+        GUILayout.EndHorizontal();
+
+        GUILayout.EndVertical();
+        GUI.backgroundColor = originalColor;
+
+        GUILayout.Space(10);
+        GUI.backgroundColor = new Color(0.7f, 0.7f, 0.7f);
+        GUILayout.BeginVertical("Box");
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Label(EditorGUIUtility.IconContent("GameObject Icon"), GUILayout.Width(20), GUILayout.Height(20));
+        GUILayout.Label("Prefabs", sectionTitleStyle);
+        GUILayout.EndHorizontal();
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button(new GUIContent("Load Selected Prefab(s)", "Click to load selected prefabs"), GUILayout.Width(150), GUILayout.Height(25)))
+        {
+            LoadSelectedPrefabs();
+        }
+
+        if (GUILayout.Button(new GUIContent("Clear Prefabs", "Click to clear loaded prefabs"), GUILayout.Width(100), GUILayout.Height(25)))
+        {
+            ClearPrefabs();
+        }
+        GUILayout.EndHorizontal();
+
+        prefabScrollPosition = GUILayout.BeginScrollView(prefabScrollPosition, false, false, GUILayout.Height(100));
+        GUILayout.BeginHorizontal();
+        for (int i = 0; i < prefabs.Count; i++)
+        {
+            GUILayout.BeginVertical();
+            GUILayout.Box(AssetPreview.GetAssetPreview(prefabs[i]), GUILayout.Width(64), GUILayout.Height(64));
+            prefabs[i] = (GameObject)EditorGUILayout.ObjectField(prefabs[i], typeof(GameObject), false);
+            GUILayout.EndVertical();
+        }
+        GUILayout.EndHorizontal();
+        GUILayout.EndScrollView();
+
+        for (int i = 0; i < prefabs.Count; i++)
+        {
+            prefabs[i] = (GameObject)EditorGUILayout.ObjectField(new GUIContent("Prefab " + (i + 1), "Loaded prefab " + (i + 1)), prefabs[i], typeof(GameObject), false);
+        }
+
+        GUILayout.EndVertical();
+        GUI.backgroundColor = originalColor;
+
+        GUILayout.Space(10);
+        GUI.backgroundColor = new Color(0.7f, 0.7f, 0.7f);
+        GUILayout.BeginVertical("Box");
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Label(EditorGUIUtility.IconContent("d_MoveTool"), GUILayout.Width(20), GUILayout.Height(20));
+        GUILayout.Label("Scaling Settings", sectionTitleStyle);
+        GUILayout.EndHorizontal();
+        showScalingSettings = EditorGUILayout.Foldout(showScalingSettings, new GUIContent("", "Click to expand or collapse"));
+        if (showScalingSettings)
+        {
+            minScaling = EditorGUILayout.Vector3Field(new GUIContent("Min Scaling", "Minimum scaling values for placed objects"), minScaling);
+            maxScaling = EditorGUILayout.Vector3Field(new GUIContent("Max Scaling", "Maximum scaling values for placed objects"), maxScaling);
+        }
+
+        GUILayout.EndVertical();
+        GUI.backgroundColor = originalColor;
+
+        GUILayout.Space(10);
+        GUI.backgroundColor = new Color(0.7f, 0.7f, 0.7f);
+        GUILayout.BeginVertical("Box");
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Label(EditorGUIUtility.IconContent("d_RotateTool"), GUILayout.Width(20), GUILayout.Height(20));
+        GUILayout.Label("Rotation Settings", sectionTitleStyle);
+        GUILayout.EndHorizontal();
+        showRotationSettings = EditorGUILayout.Foldout(showRotationSettings, new GUIContent("", "Click to expand or collapse"));
+        if (showRotationSettings)
+        {
+            rotation = EditorGUILayout.Vector3Field(new GUIContent("Rotation", "Rotation values for placed objects"), rotation);
+            rotationRandomness = EditorGUILayout.Vector3Field(new GUIContent("Rotation Randomness", "Randomness values for object rotation"), rotationRandomness);
+        }
+
+        GUILayout.EndVertical();
+        GUI.backgroundColor = originalColor;
+
+        GUILayout.Space(10);
+        GUI.backgroundColor = new Color(0.7f, 0.7f, 0.7f);
+        GUILayout.BeginVertical("Box");
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Label(EditorGUIUtility.IconContent("d_TerrainInspector.TerrainToolSplat"), GUILayout.Width(20), GUILayout.Height(20));
+        GUILayout.Label("Brush Settings", sectionTitleStyle);
+        GUILayout.EndHorizontal();
+        showBrushSettings = EditorGUILayout.Foldout(showBrushSettings, new GUIContent("", "Click to expand or collapse"));
+        if (showBrushSettings)
+        {
+            alignToSurface = EditorGUILayout.Toggle(new GUIContent("Align to Surface", "Align objects to the surface normal"), alignToSurface);
+            yOffset = EditorGUILayout.FloatField(new GUIContent("Y Axis Offset", "Vertical offset for object placement"), yOffset);
+            brushSize = EditorGUILayout.Slider(new GUIContent("Brush Size", "Set the size of the placement area"), brushSize, 0.1f, 10f);
+            objectCount = EditorGUILayout.IntSlider(new GUIContent("Object Count", "Set how many objects are placed per click"), objectCount, 1, 50);
+        }
+
+        GUILayout.EndVertical();
+        GUI.backgroundColor = originalColor;
+
+        GUILayout.Space(10);
+        GUI.backgroundColor = new Color(0.7f, 0.7f, 0.7f);
+        GUILayout.BeginVertical("Box");
+
+        GUILayout.BeginHorizontal();
+        GUILayout.Label(EditorGUIUtility.IconContent("d_UnityEditor.ConsoleWindow"), GUILayout.Width(20), GUILayout.Height(20));
+        GUILayout.Label("Instructions:", sectionTitleStyle);
+        GUILayout.EndHorizontal();
+        GUIStyle instructionStyle = new GUIStyle(GUI.skin.label) { wordWrap = true };
+        instructionRect = GUILayoutUtility.GetLastRect();
+        GUILayout.Label(
+            "1. Load Prefab(s) by selecting GameObjects in the hierarchy or project window, then click 'Load Selected Prefab(s)'.\n" +
+            "2. Use the 'Toggle ON/OFF' button to enable object placement.\n" +
+            "3. Set the Min and Max Scaling to constrain the scaling of placed objects.\n" +
+            "4. Adjust the Rotation to set the orientation of placed objects.\n" +
+            "5. Set the Rotation Randomness to add random rotation to each object.\n" +
+            "6. Use the Brush Size slider to change the size of the placement area.\n" +
+            "7. Set the Object Count to control how many objects are placed per click.\n" +
+            "8. Hold Ctrl + Left-click in the Scene view to place objects.",
+            instructionStyle
+        );
+
+        GUILayout.EndVertical();
+        GUI.backgroundColor = originalColor;
+
+        GUILayout.Space(10);
+        GUILayout.Label("© DRONEPILOT 2023", copyrightStyle);
+
+        GUILayout.EndScrollView();
+    }
+
+    private void DuringSceneGUI(SceneView sceneView)
+    {
+        if (placeObjects)
+        {
+            Event e = Event.current;
+            if (e.type == EventType.Layout)
+            {
+                HandleUtility.AddDefaultControl(0);
+            }
+            Ray ray = HandleUtility.GUIPointToWorldRay(e.mousePosition);
+            if (Physics.Raycast(ray, out RaycastHit hit))
+            {
+                Handles.color = new Color(0, 1, 0, 0.1f);
+                Handles.DrawSolidDisc(hit.point, hit.normal, brushSize);
+
+                if (e.type == EventType.MouseDown && e.button == 0 && e.control)
+                {
+                    PlaceObjects(hit.point);
+                    e.Use();
+                }
+            }
+
+            SceneView.RepaintAll();
+        }
+    }
+
+    private void LoadSelectedPrefabs()
+    {
+        prefabs.Clear();
+        foreach (GameObject prefab in Selection.gameObjects)
+        {
+            prefabs.Add(prefab);
+        }
+    }
+
+    private void ClearPrefabs()
+    {
+        prefabs.Clear();
+    }
+
+    private void PlaceObjects(Vector3 position)
+    {
+        for (int i = 0; i < objectCount; i++)
+        {
+            Vector3 randomPoint = position + Random.insideUnitSphere * brushSize;
+            if (Physics.Raycast(randomPoint + Vector3.up * 50f, Vector3.down, out RaycastHit hit))
+            {
+                Vector3 placementPosition = hit.point + Vector3.up * yOffset;
+                Quaternion rotationQuat;
+                if (alignToSurface)
+                {
+                    rotationQuat = Quaternion.FromToRotation(Vector3.up, hit.normal) * Quaternion.Euler(rotation);
+                }
+                else
+                {
+                    Vector3 randomRotation = new Vector3(
+                        Random.Range(-rotationRandomness.x, rotationRandomness.x),
+                        Random.Range(-rotationRandomness.y, rotationRandomness.y),
+                        Random.Range(-rotationRandomness.z, rotationRandomness.z)
+                    );
+                    rotationQuat = Quaternion.Euler(rotation + randomRotation);
+                }
+                Vector3 randomScaling = new Vector3(
+                    Random.Range(minScaling.x, maxScaling.x),
+                    Random.Range(minScaling.y, maxScaling.y),
+                    Random.Range(minScaling.z, maxScaling.z)
+                );
+                int prefabIndex = Random.Range(0, prefabs.Count);
+                GameObject prefab = prefabs[prefabIndex];
+                GameObject instance = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+                if (instance != null)
+                {
+                    instance.transform.position = placementPosition;
+                    instance.transform.rotation = rotationQuat;
+                    instance.transform.localScale = randomScaling;
+                    Undo.RegisterCreatedObjectUndo(instance, "Placed Object");
+                }
+            }
+        }
+    }
+}
