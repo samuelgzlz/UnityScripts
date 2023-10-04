@@ -1,0 +1,54 @@
+using UnityEngine;
+using UnityEditor;
+
+public class DistributeObjectsWindow : EditorWindow
+{
+    bool distributeX = false;
+    bool distributeY = false;
+    bool distributeZ = false;
+    float spacing = 1.0f;
+
+    [MenuItem("Tools/Distribute Objects")]
+    public static void ShowWindow()
+    {
+        GetWindow<DistributeObjectsWindow>("Distribute Objects");
+    }
+
+    private void OnGUI()
+    {
+        GUILayout.Label("Distribute Selected Objects", EditorStyles.boldLabel);
+
+        distributeX = EditorGUILayout.Toggle("Distribute on X", distributeX);
+        distributeY = EditorGUILayout.Toggle("Distribute on Y", distributeY);
+        distributeZ = EditorGUILayout.Toggle("Distribute on Z", distributeZ);
+        spacing = EditorGUILayout.FloatField("Spacing", spacing);
+
+        if (GUILayout.Button("Distribute"))
+        {
+            Distribute();
+        }
+    }
+
+    void Distribute()
+    {
+        if (Selection.gameObjects.Length <= 1)
+        {
+            Debug.LogWarning("Select multiple game objects to distribute.");
+            return;
+        }
+
+        Vector3 offset = new Vector3(
+            distributeX ? spacing : 0f,
+            distributeY ? spacing : 0f,
+            distributeZ ? spacing : 0f
+        );
+
+        Vector3 currentOffset = Vector3.zero;
+        foreach (GameObject obj in Selection.gameObjects)
+        {
+            Undo.RecordObject(obj.transform, "Distribute Objects"); // Record changes for Undo system
+            obj.transform.position += currentOffset;
+            currentOffset += offset;
+        }
+    }
+}
