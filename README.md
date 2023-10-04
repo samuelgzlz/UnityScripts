@@ -8,3 +8,4 @@ Will update each time a new script is added.
 
 1. Material Reassigner: Pick a prefab on the editor or scene and apply the selected material with one click.
 2. Object Distributor: This script creates a window that will allow you to distribute objects on any axis with the value you assign.
+3. Prefab Picasso:
