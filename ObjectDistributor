@@ -8,15 +8,51 @@ public class DistributeObjectsWindow : EditorWindow
     bool distributeZ = false;
     float spacing = 1.0f;
 
-    [MenuItem("Tools/Distribute Objects")]
+    bool alignX = false;
+    bool alignY = false;
+    bool alignZ = false;
+
+    [MenuItem("Tools/Distribute and Align Objects")]
     public static void ShowWindow()
     {
-        GetWindow<DistributeObjectsWindow>("Distribute Objects");
+        GetWindow<DistributeObjectsWindow>("Distribute and Align Objects");
     }
 
     private void OnGUI()
     {
+        //Title Bar
+        GUIStyle titleStyle = new GUIStyle(GUI.skin.box);
+        titleStyle.alignment = TextAnchor.MiddleCenter;
+        titleStyle.fontSize = 22;
+        titleStyle.fontStyle = FontStyle.Bold;
+        titleStyle.normal.textColor = Color.white;
+        titleStyle.richText = true;
+        titleStyle.hover.textColor = Color.black;  // To prevent color change on hover
+        titleStyle.onNormal.textColor = Color.black;
+        titleStyle.onHover.textColor = Color.black;
+
+        Rect titleRect = GUILayoutUtility.GetRect(1f, 65f, GUILayout.ExpandWidth(true));
+        EditorGUI.DrawRect(new Rect(titleRect.x, titleRect.y, titleRect.width, titleRect.height), Color.black);
+        EditorGUI.DrawRect(new Rect(titleRect.x + 10, titleRect.y + 10, titleRect.width - 20, titleRect.height - 20), Color.clear);
+        EditorGUI.DrawRect(new Rect(titleRect.x + 10, titleRect.y + 10, titleRect.width - 20, 2), Color.white); // Top border
+        EditorGUI.DrawRect(new Rect(titleRect.x + 10, titleRect.y + titleRect.height - 12, titleRect.width - 20, 2), Color.white); // Bottom border
+        EditorGUI.DrawRect(new Rect(titleRect.x + 10, titleRect.y + 10, 2, titleRect.height - 20), Color.white); // Left border
+        EditorGUI.DrawRect(new Rect(titleRect.x + titleRect.width - 12, titleRect.y + 10, 2, titleRect.height - 20), Color.white); // Right border
+        GUI.Box(new Rect(titleRect.x + 10, titleRect.y + 10, titleRect.width - 20, titleRect.height - 20),
+                "<color=white>OBJECT </color><color=#0099FF><b>DISTRIBUTOR</b></color>", titleStyle);
+        GUIStyle copyrightStyle = new GUIStyle(GUI.skin.label);
+        copyrightStyle.alignment = TextAnchor.MiddleCenter;
+        copyrightStyle.normal.textColor = Color.white;
+
+
+        GUI.Label(new Rect(titleRect.x + 10, titleRect.y + titleRect.height - 3, titleRect.width - 20, 20),
+                  "© DRONEPILOT 2023", copyrightStyle);
+
+        GUILayout.Space(15);  // Adds 15 pixels of space
+
         GUILayout.Label("Distribute Selected Objects", EditorStyles.boldLabel);
+        GUILayout.Label("First object selected is origin point.");
+
 
         distributeX = EditorGUILayout.Toggle("Distribute on X", distributeX);
         distributeY = EditorGUILayout.Toggle("Distribute on Y", distributeY);
@@ -26,6 +62,20 @@ public class DistributeObjectsWindow : EditorWindow
         if (GUILayout.Button("Distribute"))
         {
             Distribute();
+        }
+
+        GUILayout.Space(20); // Add some space for clarity
+
+        GUILayout.Label("Align Selected Objects", EditorStyles.boldLabel);
+        GUILayout.Label("Aligns on first object selected.");
+
+        alignX = EditorGUILayout.Toggle("Align on X", alignX);
+        alignY = EditorGUILayout.Toggle("Align on Y", alignY);
+        alignZ = EditorGUILayout.Toggle("Align on Z", alignZ);
+
+        if (GUILayout.Button("Align"))
+        {
+            Align();
         }
     }
 
@@ -46,9 +96,32 @@ public class DistributeObjectsWindow : EditorWindow
         Vector3 currentOffset = Vector3.zero;
         foreach (GameObject obj in Selection.gameObjects)
         {
-            Undo.RecordObject(obj.transform, "Distribute Objects"); // Record changes for Undo system
+            Undo.RecordObject(obj.transform, "Distribute Objects");
             obj.transform.position += currentOffset;
             currentOffset += offset;
+        }
+    }
+
+    void Align()
+    {
+        if (Selection.gameObjects.Length <= 1)
+        {
+            Debug.LogWarning("Select multiple game objects to align.");
+            return;
+        }
+
+        GameObject referenceObj = Selection.gameObjects[0];
+
+        foreach (GameObject obj in Selection.gameObjects)
+        {
+            Undo.RecordObject(obj.transform, "Align Objects");
+            Vector3 newPos = obj.transform.position;
+
+            if (alignX) newPos.x = referenceObj.transform.position.x;
+            if (alignY) newPos.y = referenceObj.transform.position.y;
+            if (alignZ) newPos.z = referenceObj.transform.position.z;
+
+            obj.transform.position = newPos;
         }
     }
 }
