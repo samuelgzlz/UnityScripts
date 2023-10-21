@@ -2,7 +2,7 @@
 Scripts I created for tools I found myself needing inside Unity.
 
 
-Will update each time a new script is added.
+Will update this list each time a new script is added.
 
 ##Scripts
 
