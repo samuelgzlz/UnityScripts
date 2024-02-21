@@ -34,6 +34,7 @@ public class BulkRenameTool : EditorWindow
         // Set the background of titleStyle to be transparent
         titleStyle.normal.background = MakeTransparentTexture();
 
+        // Draw the title bar
         Rect titleRect = GUILayoutUtility.GetRect(1f, 65f, GUILayout.ExpandWidth(true));
         EditorGUI.DrawRect(titleRect, Color.black);
         EditorGUI.DrawRect(new Rect(titleRect.x, titleRect.y, titleRect.width, titleRect.height + 15), Color.black);
@@ -126,7 +127,7 @@ public class BulkRenameTool : EditorWindow
         string incrementalPart = letters ? GetLetterSequence(count, digits) : count.ToString($"D{digits}");
         if (!string.IsNullOrEmpty(incrementalPart))
         {
-            if (newName.Length > 0 && addSpaces) // Check if we need to prepend a delimiter
+            if (newName.Length > 0 && addSpaces) // Check for spaces
                 newName.Append(delimiter);
             newName.Append(incrementalPart);
         }
@@ -147,7 +148,7 @@ public class BulkRenameTool : EditorWindow
     string GetLetterSequence(int count, int length)
     {
         string result = "";
-        count--; // Adjust count to start from 0.
+        count--; // Start from 0.
 
         for (int i = 0; i < length; i++)
         {
@@ -157,9 +158,9 @@ public class BulkRenameTool : EditorWindow
                 continue;
             }
 
-            int charIndex = count % 26; // Find the position in the alphabet.
+            int charIndex = count % 26; // Find position in the alphabet.
             char letter = (char)('A' + charIndex);
-            result = letter + result; // Build the string in reverse order for correct sequencing.
+            result = letter + result; 
             count = count / 26 - 1; // Move to the next digit.
         }
         return result;
