@@ -20,7 +20,62 @@ public class BulkRenameTool : EditorWindow
 
     void OnGUI()
     {
-        GUILayout.Label("Bulk Rename Settings", EditorStyles.boldLabel);
+        //Title Bar
+        GUIStyle titleStyle = new GUIStyle(GUI.skin.box);
+        titleStyle.alignment = TextAnchor.MiddleCenter;
+        titleStyle.fontSize = 22;
+        titleStyle.fontStyle = FontStyle.Bold;
+        titleStyle.normal.textColor = Color.white;
+        titleStyle.richText = true;
+        titleStyle.hover.textColor = Color.black;  // To prevent color change on hover
+        titleStyle.onNormal.textColor = Color.black;
+        titleStyle.onHover.textColor = Color.black;
+
+        // Set the background of titleStyle to be transparent
+        titleStyle.normal.background = MakeTransparentTexture();
+
+        Rect titleRect = GUILayoutUtility.GetRect(1f, 65f, GUILayout.ExpandWidth(true));
+        EditorGUI.DrawRect(titleRect, Color.black);
+        EditorGUI.DrawRect(new Rect(titleRect.x, titleRect.y, titleRect.width, titleRect.height + 15), Color.black);
+        EditorGUI.DrawRect(new Rect(titleRect.x + 10, titleRect.y + 10, titleRect.width - 20, titleRect.height - 20), Color.black);
+        EditorGUI.DrawRect(new Rect(titleRect.x + 10, titleRect.y + 10, titleRect.width - 20, 2), Color.white); // Top border
+        EditorGUI.DrawRect(new Rect(titleRect.x + 10, titleRect.y + titleRect.height + 3, titleRect.width - 20, 2), Color.white); // Bottom border
+        EditorGUI.DrawRect(new Rect(titleRect.x + 10, titleRect.y + 10, 2, titleRect.height - 5), Color.white); // Left border
+        EditorGUI.DrawRect(new Rect(titleRect.x + titleRect.width - 12, titleRect.y + 10, 2, titleRect.height - 5), Color.white); // Right border
+
+        GUI.Box(new Rect(titleRect.x + 10, titleRect.y + 10, titleRect.width - 20, titleRect.height - 23),
+                "<color=white>LIGHT LAB </color><color=#0099FF><b>PRO</b></color>", titleStyle);
+
+        GUIStyle copyrightStyle = new GUIStyle(GUI.skin.label);
+        copyrightStyle.alignment = TextAnchor.MiddleCenter;
+        copyrightStyle.normal.textColor = Color.white;
+
+        // Smaller Text Style
+        GUIStyle smallTextStyle = new GUIStyle(GUI.skin.label);
+        smallTextStyle.alignment = TextAnchor.MiddleCenter;
+        smallTextStyle.fontSize = 14; // Smaller font size
+        smallTextStyle.normal.textColor = Color.white;
+
+        // Smaller Text
+        GUI.Label(new Rect(titleRect.x + 10, titleRect.y + titleRect.height - 23, titleRect.width - 20, 20),
+                  "Bulk Rename Tool", smallTextStyle);
+
+        GUILayout.Space(18);  // Adds 15 pixels of space
+        
+                GUI.Label(new Rect(titleRect.x + 10, titleRect.y + titleRect.height + 13, titleRect.width - 20, 20),
+                          "© Light Lab PRO 2024. NOT FOR SALE. THIS IS A FREE ASSET.", copyrightStyle);
+        
+        GUILayout.Space(15);  // Adds 15 pixels of space
+
+        Texture2D MakeTransparentTexture()
+        {
+            Texture2D transparentTexture = new Texture2D(1, 1);
+            transparentTexture.SetPixel(0, 0, Color.clear);
+            transparentTexture.Apply();
+            return transparentTexture;
+        }
+
+        //GUILayout.Label("Bulk Rename Settings", EditorStyles.boldLabel);
         part1 = EditorGUILayout.TextField("Part 1 (e.g., Spot Light)", part1);
         part2 = EditorGUILayout.TextField("Part 2 (e.g., Top/A)", part2);
         part3 = EditorGUILayout.TextField("Part 3 (e.g., Blue)", part3);
