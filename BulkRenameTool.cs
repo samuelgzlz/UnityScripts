@@ -123,7 +123,7 @@ public class BulkRenameTool : EditorWindow
         AppendPart(newName, p3, delimiter);
         AppendPart(newName, p4, delimiter);
 
-        //Characer increment
+        //Character increment
         string incrementalPart = letters ? GetLetterSequence(count, digits) : count.ToString($"D{digits}");
         if (!string.IsNullOrEmpty(incrementalPart))
         {
